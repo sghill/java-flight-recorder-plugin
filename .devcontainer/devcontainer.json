@@ -3,7 +3,7 @@
   "image": "mcr.microsoft.com/devcontainers/java:25",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/sghill/jenkins-plugin-dev:1": {}
+    "ghcr.io/sghill/jenkins-plugin-dev/jenkins-plugin-dev:1": {}
   },
   "containerEnv": {
     "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}"
