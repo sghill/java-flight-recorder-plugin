@@ -1,8 +1,8 @@
 package io.jenkins.plugins.jfr;
 
+import jakarta.inject.Named;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import javax.inject.Named;
 import jdk.jfr.FlightRecorder;
 import jdk.jfr.Recording;
 

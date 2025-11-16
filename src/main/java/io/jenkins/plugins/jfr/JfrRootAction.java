@@ -22,6 +22,10 @@ public class JfrRootAction implements RootAction {
     @Nullable
     private transient JfrService service;
 
+    @Inject
+    @Nullable
+    private transient ObjectMapper objectMapper;
+
     @Override
     public String getIconFileName() {
         return "symbol-flight-recorder";
@@ -41,7 +45,7 @@ public class JfrRootAction implements RootAction {
     @WebMethod(name = "sessions")
     public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
         rsp.setContentType("application/json");
-        new ObjectMapper().writeValue(rsp.getWriter(), getSessions());
+        objectMapper.writeValue(rsp.getWriter(), getSessions());
     }
 
     public Collection<JfrSession> getSessions() {
