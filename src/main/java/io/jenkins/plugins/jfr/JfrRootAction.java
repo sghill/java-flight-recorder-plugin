@@ -1,21 +1,25 @@
 package io.jenkins.plugins.jfr;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.Extension;
 import hudson.model.RootAction;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import javax.inject.Inject;
+import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
+import org.jspecify.annotations.Nullable;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.WebMethod;
-import org.kohsuke.stapler.json.JsonHttpResponse;
 import org.kohsuke.stapler.verb.GET;
 
 @Extension
 public class JfrRootAction implements RootAction {
 
     @Inject
+    @Nullable
     private transient JfrService service;
 
     @Override
@@ -35,10 +39,9 @@ public class JfrRootAction implements RootAction {
 
     @GET
     @WebMethod(name = "sessions")
-    public JsonHttpResponse doSessions() {
-        JSONObject response = new JSONObject();
-        response.element("sessions", JSONSerializer.toJSON(getSessions()));
-        return new JsonHttpResponse(response);
+    public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
+        rsp.setContentType("application/json");
+        new ObjectMapper().writeValue(rsp.getWriter(), getSessions());
     }
 
     public Collection<JfrSession> getSessions() {
