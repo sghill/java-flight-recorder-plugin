@@ -3,10 +3,11 @@ package io.jenkins.plugins.jfr;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.Extension;
 import hudson.model.RootAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import javax.inject.Inject;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import org.jspecify.annotations.Nullable;
@@ -18,13 +19,21 @@ import org.kohsuke.stapler.verb.GET;
 @Extension
 public class JfrRootAction implements RootAction {
 
-    @Inject
     @Nullable
     private transient JfrService service;
 
-    @Inject
     @Nullable
     private transient ObjectMapper objectMapper;
+
+    @Inject
+    public void setService(@Nullable JfrService service) {
+        this.service = service;
+    }
+
+    @Inject
+    public void setObjectMapper(@Named("java-flight-recorder") @Nullable ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public String getIconFileName() {

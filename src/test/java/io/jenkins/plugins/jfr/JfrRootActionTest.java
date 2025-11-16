@@ -1,16 +1,14 @@
 package io.jenkins.plugins.jfr;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
 
 import java.util.Arrays;
 import java.util.Collection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -19,20 +17,24 @@ public class JfrRootActionTest {
     @Mock
     private JfrService service;
 
-    @InjectMocks
     private JfrRootAction action;
 
     @BeforeEach
     public void setUp() {
         action = new JfrRootAction();
-        MockitoAnnotations.openMocks(this);
+        action.setService(service);
     }
 
     @Test
     public void testGetSessions() {
+        // given
         Collection<JfrSession> sessions = Arrays.asList(new JfrSession("test", 123));
-        when(service.getSessions()).thenReturn(sessions);
+        given(service.getSessions()).willReturn(sessions);
 
-        assertEquals(sessions, action.getSessions());
+        // when
+        Collection<JfrSession> result = action.getSessions();
+
+        // then
+        assertEquals(sessions, result);
     }
 }
