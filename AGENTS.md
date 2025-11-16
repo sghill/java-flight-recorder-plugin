@@ -87,12 +87,6 @@ When working with Java Flight Recorder:
   ```
 - ❌ **DON'T**: Use hardcoded or mock data in production code
 
-### JSON Serialization
-
-- ✅ **DO**: Use Jackson's `ObjectMapper` for JSON serialization
-- ✅ **DO**: Inject the `ObjectMapper` with proper qualifiers
-- ✅ **DO**: Use `@JsonProperty` annotations on record components for explicit serialization
-
 ## File Organization
 
 ### Maven Settings
@@ -101,39 +95,25 @@ When working with Java Flight Recorder:
   - Files like `~/.m2/settings.xml` belong in the user's home directory, not in source control
   - The `~` directory should never appear in the repository
 
-### Source Structure
-
-Follow standard Maven project structure:
-```
-src/
-├── main/
-│   ├── java/
-│   │   └── io/jenkins/plugins/jfr/
-│   └── resources/
-│       └── io/jenkins/plugins/jfr/
-└── test/
-    └── java/
-        └── io/jenkins/plugins/jfr/
-```
-
 ## Testing
 
 - ✅ **DO**: Write unit tests for new functionality
 - ✅ **DO**: Use JUnit 5 (Jupiter) for tests
 - ✅ **DO**: Use Mockito for mocking when appropriate
+- ✅ **DO**: Use AssertJ for assertions (better readability and diagnostics)
 - ✅ **DO**: Follow the given-when-then pattern in tests
   ```java
   @Test
   public void testGetSessions() {
       // given
-      Collection<JfrSession> sessions = Arrays.asList(new JfrSession("test", 123));
+      List<JfrSession> sessions = List.of(new JfrSession("test", 123));
       given(service.getSessions()).willReturn(sessions);
       
       // when
       Collection<JfrSession> result = action.getSessions();
       
       // then
-      assertEquals(sessions, result);
+      assertThat(sessions).isEqualTo(result);
   }
   ```
 
