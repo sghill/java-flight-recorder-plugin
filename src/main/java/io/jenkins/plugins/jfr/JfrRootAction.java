@@ -6,11 +6,11 @@ import hudson.model.RootAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
-import org.jspecify.annotations.Nullable;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.WebMethod;
@@ -19,19 +19,17 @@ import org.kohsuke.stapler.verb.GET;
 @Extension
 public class JfrRootAction implements RootAction {
 
-    @Nullable
     private transient JfrService service;
 
-    @Nullable
     private transient ObjectMapper objectMapper;
 
     @Inject
-    public void setService(@Nullable JfrService service) {
+    public void setService(JfrService service) {
         this.service = service;
     }
 
     @Inject
-    public void setObjectMapper(@Named("java-flight-recorder") @Nullable ObjectMapper objectMapper) {
+    public void setObjectMapper(@Named("java-flight-recorder") ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -53,8 +51,14 @@ public class JfrRootAction implements RootAction {
     @GET
     @WebMethod(name = "sessions")
     public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
-        rsp.setContentType("application/json");
-        objectMapper.writeValue(rsp.getWriter(), getSessions());
+        rsp.setContentType("application/json; charset=utf-8");
+        try (OutputStream os = rsp.getOutputStream()) {
+            objectMapper.writeValue(os, getSessions());
+        }
+    }
+
+    public boolean dependenciesInjected() {
+        return service != null && objectMapper != null;
     }
 
     public Collection<JfrSession> getSessions() {
