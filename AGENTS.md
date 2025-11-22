@@ -57,43 +57,19 @@ When using Guice modules for dependency injection:
   ```
 - ❌ **DON'T**: Use `@Named` directly on implementation classes without a corresponding `@Provides` method
   - **Why**: Violates Guice best practices; prefer explicit provider methods for clarity
+- ❌ **DON'T**: Use `bind` methods in `AbstractModules`
+  - **Why**: Violates Guice best practices; prefer explicit provider methods for clarity
 
 ### Java Language Features
 
 - ✅ **DO**: Use Java records for simple data classes
   ```java
-  public record JfrSession(
-      @JsonProperty @NonNull String name,
-      @JsonProperty long id) {}
+  public record JfrSession(String name, long id) {}
   ```
 - ✅ **DO**: Use JSpecify annotations (`@NonNull`, `@Nullable`) for nullability contracts
+- ❌ **DON'T**: Use FindBugs annotations (`@edu.umd.cs.findbugs.annotations.NonNull`) for nullability contracts
 - ✅ **DO**: Use modern Java features (streams, lambdas, etc.) - this project targets Java 17+
 
-### Internationalization
-
-- ✅ **DO**: Use full, descriptive names in Messages.properties
-  - Example: `JfrRootAction.DisplayName=Java Flight Recorder` (not "JFR")
-- ✅ **DO**: Follow the pattern `ClassName.PropertyName=Value`
-
-## Implementation Guidelines
-
-### Using JFR APIs
-
-When working with Java Flight Recorder:
-
-- ✅ **DO**: Use `jdk.jfr.FlightRecorder` and related classes to get real runtime data
-  ```java
-  FlightRecorder.getFlightRecorder().getRecordings()
-  ```
-- ❌ **DON'T**: Use hardcoded or mock data in production code
-
-## File Organization
-
-### Maven Settings
-
-- ❌ **NEVER** commit Maven settings files to the repository
-  - Files like `~/.m2/settings.xml` belong in the user's home directory, not in source control
-  - The `~` directory should never appear in the repository
 
 ## Testing
 
@@ -122,10 +98,11 @@ When working with Java Flight Recorder:
 Before submitting code:
 
 1. ✅ Ensure SpotBugs passes (never skip)
-2. ✅ Ensure Spotless formatting passes
-3. ✅ Ensure no JUnit 4 imports (project uses JUnit 5)
-4. ✅ Run `mvn verify` to execute all checks
-5. ✅ Verify no unnecessary dependencies were added
+2. ✅ Ensure `mvn spotless:apply` has been run to format code
+3. ✅ Ensure Spotless formatting passes
+4. ✅ Ensure no JUnit 4 imports (project uses JUnit 5)
+5. ✅ Run `mvn verify spotless:check` to execute all checks
+6. ✅ Verify no unnecessary dependencies were added
 
 ## Common Pitfalls to Avoid
 
