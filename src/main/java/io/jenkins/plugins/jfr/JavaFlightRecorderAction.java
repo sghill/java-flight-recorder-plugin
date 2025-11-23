@@ -1,13 +1,14 @@
 package io.jenkins.plugins.jfr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import jakarta.inject.Inject;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.model.RootAction;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Collection;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.StaplerRequest;
@@ -61,13 +62,9 @@ public class JavaFlightRecorderAction implements RootAction {
   public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException {
     rsp.setContentType("application/json");
     rsp.setCharacterEncoding("UTF-8");
-    try (java.io.Writer writer = rsp.getWriter()) {
+    try (Writer writer = rsp.getWriter()) {
       objectMapper.writeValue(writer, getSessions());
     }
   }
 
-  @NonNull
-  public static JavaFlightRecorderAction get() {
-    return Jenkins.get().getExtensionList(JavaFlightRecorderAction.class).get(0);
-  }
 }
