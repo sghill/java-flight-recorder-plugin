@@ -58,7 +58,6 @@ public class JavaFlightRecorderAction implements RootAction {
 
   @GET
   @WebMethod(name = "sessions")
-  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException {
     rsp.setContentType("application/json");
     rsp.setCharacterEncoding("UTF-8");
@@ -67,15 +66,12 @@ public class JavaFlightRecorderAction implements RootAction {
     }
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private ObjectMapper objectMapper() {
     if (objectMapper == null) {
-      if (Jenkins.get().getInjector() == null) {
-        throw new IllegalStateException("Guice injector is not available.");
-      }
-      Jenkins.get().getInjector().injectMembers(this);
-    }
-    if (objectMapper == null) {
-        throw new IllegalStateException("ObjectMapper has not been injected.");
+      com.google.inject.Injector injector = Jenkins.get().getInjector();
+      java.util.Objects.requireNonNull(injector);
+      injector.injectMembers(this);
     }
     return objectMapper;
   }
