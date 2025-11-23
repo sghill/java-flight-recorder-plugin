@@ -57,18 +57,17 @@ When using Guice modules for dependency injection:
   ```
 - ❌ **DON'T**: Use `@Named` directly on implementation classes without a corresponding `@Provides` method
   - **Why**: Violates Guice best practices; prefer explicit provider methods for clarity
-- ❌ **DON'T**: Use `bind` methods in `AbstractModules`
-  - **Why**: Violates Guice best practices; prefer explicit provider methods for clarity
 
 ### Java Language Features
 
 - ✅ **DO**: Use Java records for simple data classes
   ```java
-  public record JfrSession(String name, long id) {}
+  public record JfrSession(
+      @JsonProperty @NonNull String name,
+      @JsonProperty long id) {}
   ```
 - ✅ **DO**: Use JSpecify annotations (`@NonNull`, `@Nullable`) for nullability contracts
 - ✅ **DO**: Use modern Java features (streams, lambdas, etc.) - this project targets Java 17+
-- ✅ **DO**: Use `List.of()` static factory method for creating immutable lists
 
 ### Internationalization
 
@@ -123,11 +122,10 @@ When working with Java Flight Recorder:
 Before submitting code:
 
 1. ✅ Ensure SpotBugs passes (never skip)
-2. ✅ Ensure `mvn spotless:apply` has been run to format code
-3. ✅ Ensure Spotless formatting passes
-4. ✅ Ensure no JUnit 4 imports (project uses JUnit 5)
-5. ✅ Run `mvn verify spotless:check` to execute all checks
-6. ✅ Verify no unnecessary dependencies were added
+2. ✅ Ensure Spotless formatting passes
+3. ✅ Ensure no JUnit 4 imports (project uses JUnit 5)
+4. ✅ Run `mvn verify` to execute all checks
+5. ✅ Verify no unnecessary dependencies were added
 
 ## Common Pitfalls to Avoid
 

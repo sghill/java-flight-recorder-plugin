@@ -29,8 +29,7 @@ public class JavaFlightRecorderAction implements RootAction {
   }
 
   @Inject
-  @Named("java-flight-recorder")
-  public void setObjectMapper(ObjectMapper objectMapper) {
+  public void setObjectMapper(@Named("java-flight-recorder") ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
