@@ -6,22 +6,32 @@ import com.google.inject.name.Named;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
-import hudson.model.UnprotectedRootAction;
+import hudson.model.RootAction;
 import java.io.IOException;
 import java.util.Collection;
 import jenkins.model.Jenkins;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.WebMethod;
-import org.kohsuke.stapler.json.JsonHttpResponse;
 import org.kohsuke.stapler.verb.GET;
 
 @Extension
-public class JavaFlightRecorderAction implements UnprotectedRootAction {
+public class JavaFlightRecorderAction implements RootAction {
 
-  @Inject transient JfrService service;
+  private transient JfrService service;
+
+  private transient ObjectMapper objectMapper;
+
+  @Inject
+  public void setService(JfrService service) {
+    this.service = service;
+  }
 
   @Inject
   @Named("java-flight-recorder")
-  transient ObjectMapper objectMapper;
+  public void setObjectMapper(ObjectMapper objectMapper) {
+    this.objectMapper = objectMapper;
+  }
 
   @Override
   @Nullable
@@ -48,9 +58,12 @@ public class JavaFlightRecorderAction implements UnprotectedRootAction {
 
   @GET
   @WebMethod(name = "sessions")
-  public void doSessions(org.kohsuke.stapler.StaplerRequest req, org.kohsuke.stapler.StaplerResponse rsp) throws IOException {
+  public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException {
     rsp.setContentType("application/json");
-    objectMapper.writeValue(rsp.getWriter(), getSessions());
+    rsp.setCharacterEncoding("UTF-8");
+    try (java.io.Writer writer = rsp.getWriter()) {
+      objectMapper.writeValue(writer, getSessions());
+    }
   }
 
   @NonNull

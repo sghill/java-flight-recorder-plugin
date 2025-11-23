@@ -47,12 +47,12 @@ class JavaFlightRecorderActionTest {
   @BeforeEach
   void setUp() {
     javaFlightRecorderAction = new JavaFlightRecorderAction();
-    javaFlightRecorderAction.service = jfrService;
+    javaFlightRecorderAction.setService(jfrService);
     objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
     objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-    javaFlightRecorderAction.objectMapper = objectMapper;
+    javaFlightRecorderAction.setObjectMapper(objectMapper);
   }
 
   @Test
