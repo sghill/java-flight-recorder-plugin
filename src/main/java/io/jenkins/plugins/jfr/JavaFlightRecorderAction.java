@@ -58,17 +58,25 @@ public class JavaFlightRecorderAction implements RootAction {
 
   @GET
   @WebMethod(name = "sessions")
+  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException {
-    if (objectMapper == null) {
-        if (Jenkins.get().getInjector() != null) {
-            Jenkins.get().getInjector().injectMembers(this);
-        }
-    }
     rsp.setContentType("application/json");
     rsp.setCharacterEncoding("UTF-8");
     try (Writer writer = rsp.getWriter()) {
-      objectMapper.writeValue(writer, getSessions());
+      objectMapper().writeValue(writer, getSessions());
     }
   }
 
+  private ObjectMapper objectMapper() {
+    if (objectMapper == null) {
+      if (Jenkins.get().getInjector() == null) {
+        throw new IllegalStateException("Guice injector is not available.");
+      }
+      Jenkins.get().getInjector().injectMembers(this);
+    }
+    if (objectMapper == null) {
+        throw new IllegalStateException("ObjectMapper has not been injected.");
+    }
+    return objectMapper;
+  }
 }
