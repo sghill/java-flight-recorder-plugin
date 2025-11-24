@@ -84,14 +84,15 @@ When using Guice modules for dependency injection:
       // given
       List<JfrSession> sessions = List.of(new JfrSession("test", 123));
       given(service.getSessions()).willReturn(sessions);
-      
+
       // when
       Collection<JfrSession> result = action.getSessions();
-      
+
       // then
       assertThat(sessions).isEqualTo(result);
   }
   ```
+- ✅ **DO**: To integrate Jenkins test infrastructure with JUnit 5, annotate test classes with `@WithJenkins` and add `JenkinsRule` as a parameter to test methods.
 
 ## Quality Checks
 
@@ -113,6 +114,27 @@ Before submitting code:
 5. ❌ Using javax instead of jakarta namespace
 6. ❌ Committing IDE or build tool configuration files
 7. ❌ Using abbreviated names in user-facing strings
+
+## Project Specific Information
+- The project is a Jenkins plugin for Java Flight Recorder, built with Maven and packaged as an HPI file.
+- To download all Maven dependencies, run `mvn --batch-mode dependency:go-offline`.
+- To build and verify the project, run `mvn --batch-mode clean verify`.
+- Run `mvn --batch-mode spotless:apply` to format the code according to the project's style guidelines.
+- Always use the `--batch-mode` flag when running Maven commands.
+- The project uses the Stapler web framework for request handling. While Jenkins core uses Google Guice for dependency injection, `jakarta.inject` annotations should be preferred where possible.
+- The project uses Jackson for JSON serialization. For Stapler endpoints, it may be necessary to serialize objects to a JSON string with Jackson and then parse it into a `net.sf.json` object, or write directly to the `StaplerResponse` writer.
+- Jenkins `Action` classes require a corresponding view file (e.g., `index.jelly`) in a resource directory that mirrors the class's package structure (e.g., `src/main/resources/io/jenkins/plugins/jfr/JfrAction/`) to render a UI.
+- The project's Jackson `ObjectMapper` must be configured with `SerializationFeature.WRITE_DATES_AS_TIMESTAMPS = true` and `SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS = false` for correct date serialization.
+- A Guice module (`JfrGuiceModule`) provides a Jackson `ObjectMapper` instance using the `@Named("java-flight-recorder")` annotation.
+- Guice modules should exclusively use `@Provides` methods for bindings, removing the `configure()` method and `bind()` statements.
+- For dependency injection and testability, services should be defined as interfaces (e.g., `JfrService`) with package-private implementations (e.g., `DefaultJfrService`). The Guice module should bind the interface to its implementation.
+- Use `org.springframework.security.core.*` for security-related classes, as the project has migrated from Acegi to Spring Security.
+- To test code that requires permissions, use `MockAuthorizationStrategy` to configure user permissions and `ACL.as(User.get(username, ...))` to impersonate a user.
+- When testing permissions with a user that may not exist, first set up a security realm in the test (e.g., `jenkinsRule.jenkins.setSecurityRealm(jenkinsRule.createDummySecurityRealm())`) to allow for dynamic user creation.
+- The `AGENTS.md` file provides project-specific contribution guidelines, such as using `@NonNull` annotations and the given-when-then pattern in tests.
+- The DTD for the `checkstyle.xml` configuration file should be `https://checkstyle.org/dtds/configuration_1_3.dtd`.
+- The project's checkstyle configuration (`checkstyle.xml`) disallows certain imports, including Guice annotations (e.g., `com.google.inject.Singleton`) and FindBugs nullability annotations (`edu.umd.cs.findbugs.annotations.NonNull`).
+- The project uses a GitHub Actions workflow defined in `.github/workflows/ci.yml` for continuous integration.
 
 ## Resources
 
