@@ -1,6 +1,7 @@
 package io.jenkins.plugins.jfr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Injector;
 import com.google.inject.name.Named;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -10,6 +11,7 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.Objects;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -68,8 +70,8 @@ public class JavaFlightRecorderAction implements RootAction {
 
     private ObjectMapper objectMapper() {
         if (objectMapper == null) {
-            com.google.inject.Injector injector = Jenkins.get().getInjector();
-            java.util.Objects.requireNonNull(injector);
+            Injector injector = Jenkins.get().getInjector();
+            Objects.requireNonNull(injector);
             injector.injectMembers(this);
         }
         return objectMapper;
