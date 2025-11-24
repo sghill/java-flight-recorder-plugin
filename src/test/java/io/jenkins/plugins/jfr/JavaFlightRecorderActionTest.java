@@ -6,7 +6,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
@@ -36,17 +39,14 @@ class JavaFlightRecorderActionTest {
     private JfrService jfrService;
 
     private JavaFlightRecorderAction javaFlightRecorderAction;
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         javaFlightRecorderAction = new JavaFlightRecorderAction();
         javaFlightRecorderAction.setService(jfrService);
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
-        objectMapper.configure(
-                com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        Injector injector = Guice.createInjector(new JfrGuiceModule());
+        ObjectMapper objectMapper =
+                injector.getInstance(Key.get(ObjectMapper.class, Names.named("java-flight-recorder")));
         javaFlightRecorderAction.setObjectMapper(objectMapper);
     }
 
