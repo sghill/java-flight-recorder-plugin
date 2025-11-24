@@ -1,7 +1,7 @@
 package io.jenkins.plugins.jfr;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import org.jspecify.annotations.NonNull;
 
 public interface JfrService {
     @NonNull

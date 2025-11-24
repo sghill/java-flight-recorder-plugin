@@ -1,10 +1,10 @@
 package io.jenkins.plugins.jfr;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.stream.Collectors;
 import jdk.jfr.FlightRecorder;
 import jdk.jfr.Recording;
+import org.jspecify.annotations.NonNull;
 
 class DefaultJfrService implements JfrService {
 
