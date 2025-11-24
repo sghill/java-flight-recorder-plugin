@@ -11,17 +11,17 @@ import hudson.Extension;
 @Extension
 public class JfrGuiceModule extends AbstractModule {
 
-  @Override
-  protected void configure() {
-    bind(JfrService.class).in(Singleton.class);
-  }
+    @Override
+    protected void configure() {
+        bind(JfrService.class).in(Singleton.class);
+    }
 
-  @Provides
-  @Singleton
-  @Named("java-flight-recorder")
-  public ObjectMapper objectMapper() {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-    return mapper;
-  }
+    @Provides
+    @Singleton
+    @Named("java-flight-recorder")
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        return mapper;
+    }
 }
