@@ -1,9 +1,9 @@
 package io.jenkins.plugins.jfr;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Instant;
 import java.util.Map;
+import org.jspecify.annotations.NonNull;
 
 public record JfrSession(
         @JsonProperty @NonNull String name,

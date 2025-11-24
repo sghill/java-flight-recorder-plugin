@@ -2,8 +2,6 @@ package io.jenkins.plugins.jfr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Injector;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.model.RootAction;
 import jakarta.inject.Inject;
@@ -13,6 +11,8 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.Objects;
 import jenkins.model.Jenkins;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.WebMethod;

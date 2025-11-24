@@ -5,7 +5,7 @@
 <module name="Checker">
   <module name="TreeWalker">
     <module name="IllegalImport">
-      <property name="illegalClasses" value="com.google.inject.name.Named, com.google.inject.Singleton"/>
+      <property name="illegalClasses" value="com.google.inject.name.Named, com.google.inject.Singleton, edu.umd.cs.findbugs.annotations.NonNull, edu.umd.cs.findbugs.annotations.Nullable"/>
     </module>
   </module>
 </module>
