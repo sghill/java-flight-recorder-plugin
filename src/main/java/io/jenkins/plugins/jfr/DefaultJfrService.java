@@ -1,13 +1,11 @@
 package io.jenkins.plugins.jfr;
 
-import com.google.inject.Singleton;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.stream.Collectors;
 import jdk.jfr.FlightRecorder;
 import jdk.jfr.Recording;
 
-@Singleton
 class DefaultJfrService implements JfrService {
 
     @Override

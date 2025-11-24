@@ -10,7 +10,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
-import hudson.security.Permission;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
@@ -82,10 +81,8 @@ class JavaFlightRecorderActionTest {
     public void doSessionsIsProtectedByAdministerPermission(JenkinsRule r) throws Exception {
         // given
         r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
-        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
-                .grant(Permission.READ)
-                .everywhere()
-                .to("reader"));
+        r.jenkins.setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Jenkins.READ).everywhere().to("reader"));
 
         // when
         try (ACLContext c = ACL.as(User.get("reader", false, null))) {
