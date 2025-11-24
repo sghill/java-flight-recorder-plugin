@@ -61,6 +61,7 @@ public class JavaFlightRecorderAction implements RootAction {
     @GET
     @WebMethod(name = "sessions")
     public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         rsp.setContentType("application/json");
         rsp.setCharacterEncoding("UTF-8");
         try (Writer writer = rsp.getWriter()) {

@@ -13,7 +13,7 @@ public class JfrGuiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(JfrService.class).in(Singleton.class);
+        bind(JfrService.class).to(DefaultJfrService.class).in(Singleton.class);
     }
 
     @Provides
