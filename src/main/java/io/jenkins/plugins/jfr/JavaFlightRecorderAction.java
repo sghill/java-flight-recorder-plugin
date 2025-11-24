@@ -66,7 +66,6 @@ public class JavaFlightRecorderAction implements RootAction {
     }
   }
 
-  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private ObjectMapper objectMapper() {
     if (objectMapper == null) {
       com.google.inject.Injector injector = Jenkins.get().getInjector();
