@@ -1,12 +1,12 @@
 package io.jenkins.plugins.jfr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.name.Named;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.model.RootAction;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
