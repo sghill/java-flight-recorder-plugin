@@ -3,6 +3,7 @@ package io.jenkins.plugins.jfr;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,11 +14,14 @@ import com.google.inject.name.Names;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
+import java.io.BufferedReader;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import jenkins.model.Jenkins;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,13 +44,14 @@ class JavaFlightRecorderActionTest {
 
     private JavaFlightRecorderAction javaFlightRecorderAction;
 
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         javaFlightRecorderAction = new JavaFlightRecorderAction();
         javaFlightRecorderAction.setService(jfrService);
         Injector injector = Guice.createInjector(new JfrGuiceModule());
-        ObjectMapper objectMapper =
-                injector.getInstance(Key.get(ObjectMapper.class, Names.named("java-flight-recorder")));
+        objectMapper = injector.getInstance(Key.get(ObjectMapper.class, Names.named("java-flight-recorder")));
         javaFlightRecorderAction.setObjectMapper(objectMapper);
     }
 
@@ -93,5 +98,95 @@ class JavaFlightRecorderActionTest {
             assertThatThrownBy(() -> javaFlightRecorderAction.doSessions(req, rsp))
                     .isInstanceOf(AccessDeniedException.class);
         }
+    }
+
+    @Test
+    void doDump(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated()
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to("reader"));
+        DumpRequest request = new DumpRequest("test");
+        when(jfrService.dump(request)).thenReturn(new DumpResponse("/tmp/test"));
+
+        // when
+        StaplerRequest req = mock(StaplerRequest.class);
+        StringWriter requestWriter = new StringWriter();
+        objectMapper.writeValue(requestWriter, request);
+        when(req.getReader()).thenReturn(new BufferedReader(new StringReader(requestWriter.toString())));
+        StaplerResponse rsp = mock(StaplerResponse.class);
+        StringWriter writer = new StringWriter();
+        when(rsp.getWriter()).thenReturn(new PrintWriter(writer));
+        javaFlightRecorderAction.doDump(req, rsp);
+
+        // then
+        assertThat(writer.toString()).isEqualTo("{\"path\":\"/tmp/test\"}");
+    }
+
+    @Test
+    public void doDumpIsProtectedByAdministerPermission(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        r.jenkins.setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Jenkins.READ).everywhere().to("reader"));
+
+        // when
+        try (ACLContext c = ACL.as(User.get("reader", false, null))) {
+            StaplerRequest req = mock(StaplerRequest.class);
+            StaplerResponse rsp = mock(StaplerResponse.class);
+
+            // then
+            assertThatThrownBy(() -> javaFlightRecorderAction.doDump(req, rsp))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+    }
+
+    @Test
+    void doDumpHandlesNoSuchElementException(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated());
+        DumpRequest request = new DumpRequest("test");
+        when(jfrService.dump(request)).thenThrow(new NoSuchElementException());
+
+        // when
+        StaplerRequest req = mock(StaplerRequest.class);
+        StringWriter requestWriter = new StringWriter();
+        objectMapper.writeValue(requestWriter, request);
+        when(req.getReader())
+                .thenReturn(new java.io.BufferedReader(new java.io.StringReader(requestWriter.toString())));
+        StaplerResponse rsp = mock(StaplerResponse.class);
+        StringWriter writer = new StringWriter();
+        when(rsp.getWriter()).thenReturn(new PrintWriter(writer));
+        javaFlightRecorderAction.doDump(req, rsp);
+
+        // then
+        verify(rsp).setStatus(404);
+    }
+
+    @Test
+    void doDumpHandlesInvalidJson(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated());
+
+        // when
+        StaplerRequest req = mock(StaplerRequest.class);
+        when(req.getReader()).thenReturn(new BufferedReader(new StringReader("{{")));
+        StaplerResponse rsp = mock(StaplerResponse.class);
+        StringWriter writer = new StringWriter();
+        when(rsp.getWriter()).thenReturn(new PrintWriter(writer));
+        javaFlightRecorderAction.doDump(req, rsp);
+
+        // then
+        verify(rsp).setStatus(400);
     }
 }

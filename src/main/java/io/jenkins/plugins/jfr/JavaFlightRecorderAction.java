@@ -1,5 +1,6 @@
 package io.jenkins.plugins.jfr;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Injector;
 import hudson.Extension;
@@ -7,8 +8,10 @@ import hudson.model.RootAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import jenkins.model.Jenkins;
 import org.jspecify.annotations.NonNull;
@@ -16,6 +19,7 @@ import org.jspecify.annotations.Nullable;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.WebMethod;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.GET;
 
 @Extension
@@ -66,6 +70,25 @@ public class JavaFlightRecorderAction implements RootAction {
         rsp.setCharacterEncoding("UTF-8");
         try (Writer writer = rsp.getWriter()) {
             objectMapper().writeValue(writer, getSessions());
+        }
+    }
+
+    @RequirePOST
+    @WebMethod(name = "dump")
+    public void doDump(StaplerRequest req, StaplerResponse rsp) throws IOException {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        rsp.setContentType("application/json");
+        rsp.setCharacterEncoding("UTF-8");
+        ObjectMapper mapper = objectMapper();
+        try (Writer writer = rsp.getWriter();
+                Reader reader = req.getReader()) {
+            DumpRequest dumpRequest = mapper.readValue(reader, DumpRequest.class);
+            DumpResponse dumpResponse = service.dump(dumpRequest);
+            mapper.writeValue(writer, dumpResponse);
+        } catch (NoSuchElementException e) {
+            rsp.setStatus(404);
+        } catch (JsonProcessingException e) {
+            rsp.setStatus(400);
         }
     }
 
