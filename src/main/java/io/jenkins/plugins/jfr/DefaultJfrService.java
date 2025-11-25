@@ -3,15 +3,12 @@ package io.jenkins.plugins.jfr;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import jdk.jfr.FlightRecorder;
 import jdk.jfr.Recording;
-import jenkins.model.Jenkins;
 import org.jspecify.annotations.NonNull;
 
 class DefaultJfrService implements JfrService {
@@ -31,23 +28,7 @@ class DefaultJfrService implements JfrService {
                 .filter(r -> r.getName().equals(request.name()))
                 .findFirst();
         if (recording.isPresent()) {
-            Path baseDir = Paths.get(
-                    Objects.requireNonNull(Jenkins.get(), "Jenkins instance is null")
-                            .getRootDir()
-                            .getAbsolutePath(),
-                    "jfr-dumps");
-            Path dumpDir = baseDir.resolve(request.dir()).normalize();
-            if (!dumpDir.startsWith(baseDir)) {
-                throw new IllegalArgumentException("Invalid directory specified");
-            }
-            Files.createDirectories(dumpDir);
-            Path namePath = Paths.get(request.name());
-            Path fileName = namePath.getFileName();
-            if (fileName == null) {
-                throw new IOException("Invalid recording name provided: " + request.name());
-            }
-            String sanitizedName = fileName.toString();
-            Path path = dumpDir.resolve(sanitizedName);
+            Path path = Files.createTempFile("jenkins-jvm-", ".jfr");
             recording.get().dump(path);
             return new DumpResponse(path.toString());
         }

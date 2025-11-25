@@ -3,6 +3,7 @@ package io.jenkins.plugins.jfr;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,13 +42,14 @@ class JavaFlightRecorderActionTest {
 
     private JavaFlightRecorderAction javaFlightRecorderAction;
 
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         javaFlightRecorderAction = new JavaFlightRecorderAction();
         javaFlightRecorderAction.setService(jfrService);
         Injector injector = Guice.createInjector(new JfrGuiceModule());
-        ObjectMapper objectMapper =
-                injector.getInstance(Key.get(ObjectMapper.class, Names.named("java-flight-recorder")));
+        objectMapper = injector.getInstance(Key.get(ObjectMapper.class, Names.named("java-flight-recorder")));
         javaFlightRecorderAction.setObjectMapper(objectMapper);
     }
 
@@ -106,13 +108,13 @@ class JavaFlightRecorderActionTest {
                 .grant(Jenkins.READ)
                 .everywhere()
                 .to("reader"));
-        DumpRequest request = new DumpRequest("test", "safe");
+        DumpRequest request = new DumpRequest("test");
         when(jfrService.dump(request)).thenReturn(new DumpResponse("/tmp/test"));
 
         // when
         StaplerRequest req = mock(StaplerRequest.class);
         StringWriter requestWriter = new StringWriter();
-        new ObjectMapper().writeValue(requestWriter, request);
+        objectMapper.writeValue(requestWriter, request);
         when(req.getReader())
                 .thenReturn(new java.io.BufferedReader(new java.io.StringReader(requestWriter.toString())));
         StaplerResponse rsp = mock(StaplerResponse.class);
@@ -149,13 +151,13 @@ class JavaFlightRecorderActionTest {
                 .grant(Jenkins.ADMINISTER)
                 .everywhere()
                 .toAuthenticated());
-        DumpRequest request = new DumpRequest("test", "safe");
+        DumpRequest request = new DumpRequest("test");
         when(jfrService.dump(request)).thenThrow(new NoSuchElementException());
 
         // when
         StaplerRequest req = mock(StaplerRequest.class);
         StringWriter requestWriter = new StringWriter();
-        new ObjectMapper().writeValue(requestWriter, request);
+        objectMapper.writeValue(requestWriter, request);
         when(req.getReader())
                 .thenReturn(new java.io.BufferedReader(new java.io.StringReader(requestWriter.toString())));
         StaplerResponse rsp = mock(StaplerResponse.class);
@@ -164,31 +166,6 @@ class JavaFlightRecorderActionTest {
         javaFlightRecorderAction.doDump(req, rsp);
 
         // then
-        org.mockito.Mockito.verify(rsp).setStatus(404);
-    }
-
-    @Test
-    void doDumpHandlesIllegalArgumentException(JenkinsRule r) throws Exception {
-        // given
-        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
-                .grant(Jenkins.ADMINISTER)
-                .everywhere()
-                .toAuthenticated());
-        DumpRequest request = new DumpRequest("test", "../../../etc");
-        when(jfrService.dump(request)).thenThrow(new IllegalArgumentException());
-
-        // when
-        StaplerRequest req = mock(StaplerRequest.class);
-        StringWriter requestWriter = new StringWriter();
-        new ObjectMapper().writeValue(requestWriter, request);
-        when(req.getReader())
-                .thenReturn(new java.io.BufferedReader(new java.io.StringReader(requestWriter.toString())));
-        StaplerResponse rsp = mock(StaplerResponse.class);
-        StringWriter writer = new StringWriter();
-        when(rsp.getWriter()).thenReturn(new PrintWriter(writer));
-        javaFlightRecorderAction.doDump(req, rsp);
-
-        // then
-        org.mockito.Mockito.verify(rsp).setStatus(400);
+        verify(rsp).setStatus(404);
     }
 }
