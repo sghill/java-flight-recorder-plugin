@@ -9,6 +9,7 @@ import jakarta.inject.Named;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import jenkins.model.Jenkins;
 import org.jspecify.annotations.NonNull;
@@ -17,6 +18,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.WebMethod;
 import org.kohsuke.stapler.verb.GET;
+import org.kohsuke.stapler.verb.POST;
 
 @Extension
 public class JavaFlightRecorderAction implements RootAction {
@@ -66,6 +68,23 @@ public class JavaFlightRecorderAction implements RootAction {
         rsp.setCharacterEncoding("UTF-8");
         try (Writer writer = rsp.getWriter()) {
             objectMapper().writeValue(writer, getSessions());
+        }
+    }
+
+    @POST
+    @WebMethod(name = "dump")
+    public void doDump(StaplerRequest req, StaplerResponse rsp) throws IOException {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        rsp.setContentType("application/json");
+        rsp.setCharacterEncoding("UTF-8");
+        try (Writer writer = rsp.getWriter()) {
+            DumpRequest dumpRequest = objectMapper().readValue(req.getReader(), DumpRequest.class);
+            DumpResponse dumpResponse = service.dump(dumpRequest);
+            objectMapper().writeValue(writer, dumpResponse);
+        } catch (NoSuchElementException e) {
+            rsp.setStatus(404);
+        } catch (IllegalArgumentException e) {
+            rsp.setStatus(400);
         }
     }
 
