@@ -14,7 +14,9 @@ import com.google.inject.name.Names;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
+import java.io.BufferedReader;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.Collections;
@@ -115,8 +117,7 @@ class JavaFlightRecorderActionTest {
         StaplerRequest req = mock(StaplerRequest.class);
         StringWriter requestWriter = new StringWriter();
         objectMapper.writeValue(requestWriter, request);
-        when(req.getReader())
-                .thenReturn(new java.io.BufferedReader(new java.io.StringReader(requestWriter.toString())));
+        when(req.getReader()).thenReturn(new BufferedReader(new StringReader(requestWriter.toString())));
         StaplerResponse rsp = mock(StaplerResponse.class);
         StringWriter writer = new StringWriter();
         when(rsp.getWriter()).thenReturn(new PrintWriter(writer));
@@ -167,5 +168,25 @@ class JavaFlightRecorderActionTest {
 
         // then
         verify(rsp).setStatus(404);
+    }
+
+    @Test
+    void doDumpHandlesInvalidJson(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated());
+
+        // when
+        StaplerRequest req = mock(StaplerRequest.class);
+        when(req.getReader()).thenReturn(new BufferedReader(new StringReader("{{")));
+        StaplerResponse rsp = mock(StaplerResponse.class);
+        StringWriter writer = new StringWriter();
+        when(rsp.getWriter()).thenReturn(new PrintWriter(writer));
+        javaFlightRecorderAction.doDump(req, rsp);
+
+        // then
+        verify(rsp).setStatus(400);
     }
 }
