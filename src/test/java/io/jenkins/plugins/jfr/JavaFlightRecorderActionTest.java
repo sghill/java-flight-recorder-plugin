@@ -189,4 +189,53 @@ class JavaFlightRecorderActionTest {
         // then
         verify(rsp).setStatus(400);
     }
+
+    @Test
+    void doStart(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated()
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to("reader"));
+        StartRecordingRequest request = new StartRecordingRequest(30L);
+        JfrSession session = new JfrSession(
+                "test", Instant.ofEpochMilli(1), "250MB", "PT1H", Collections.singletonMap("foo", "bar"));
+        when(jfrService.start(request)).thenReturn(session);
+
+        // when
+        StaplerRequest req = mock(StaplerRequest.class);
+        StringWriter requestWriter = new StringWriter();
+        objectMapper.writeValue(requestWriter, request);
+        when(req.getReader()).thenReturn(new BufferedReader(new StringReader(requestWriter.toString())));
+        StaplerResponse rsp = mock(StaplerResponse.class);
+        StringWriter writer = new StringWriter();
+        when(rsp.getWriter()).thenReturn(new PrintWriter(writer));
+        javaFlightRecorderAction.doStart(req, rsp);
+
+        // then
+        assertThat(writer.toString())
+                .isEqualTo(
+                        "{\"name\":\"test\",\"startTime\":1,\"maxSize\":\"250MB\",\"duration\":\"PT1H\",\"settings\":{\"foo\":\"bar\"}}");
+    }
+
+    @Test
+    public void doStartIsProtectedByAdministerPermission(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        r.jenkins.setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Jenkins.READ).everywhere().to("reader"));
+
+        // when
+        try (ACLContext c = ACL.as(User.get("reader", false, null))) {
+            StaplerRequest req = mock(StaplerRequest.class);
+            StaplerResponse rsp = mock(StaplerResponse.class);
+
+            // then
+            assertThatThrownBy(() -> javaFlightRecorderAction.doStart(req, rsp))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+    }
 }
