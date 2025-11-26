@@ -25,30 +25,30 @@ import org.kohsuke.stapler.verb.GET;
 @Extension
 public class JavaFlightRecorderAction implements RootAction {
 
+    @Inject
     private transient JfrService service;
 
-    private transient ObjectMapper objectMapper;
-
-    @Inject
     public void setService(JfrService service) {
         this.service = service;
     }
 
     @Inject
-    public void setObjectMapper(@Named("java-flight-recorder") ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
+    @Named("java-flight-recorder")
+    private transient ObjectMapper objectMapper;
+
+    @Inject
+    private transient Jenkins jenkins;
 
     @Override
     @Nullable
     public String getIconFileName() {
-        return null;
+        return "images/24x24/jfr.png";
     }
 
     @Override
     @Nullable
     public String getDisplayName() {
-        return null;
+        return "Java Flight Recorder";
     }
 
     @Override
@@ -65,26 +65,25 @@ public class JavaFlightRecorderAction implements RootAction {
     @GET
     @WebMethod(name = "sessions")
     public void doSessions(StaplerRequest req, StaplerResponse rsp) throws IOException {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        jenkins.checkPermission(Jenkins.ADMINISTER);
         rsp.setContentType("application/json");
         rsp.setCharacterEncoding("UTF-8");
         try (Writer writer = rsp.getWriter()) {
-            objectMapper().writeValue(writer, getSessions());
+            objectMapper.writeValue(writer, getSessions());
         }
     }
 
     @RequirePOST
     @WebMethod(name = "dump")
     public void doDump(StaplerRequest req, StaplerResponse rsp) throws IOException {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        jenkins.checkPermission(Jenkins.ADMINISTER);
         rsp.setContentType("application/json");
         rsp.setCharacterEncoding("UTF-8");
-        ObjectMapper mapper = objectMapper();
         try (Writer writer = rsp.getWriter();
                 Reader reader = req.getReader()) {
-            DumpRequest dumpRequest = mapper.readValue(reader, DumpRequest.class);
+            DumpRequest dumpRequest = objectMapper.readValue(reader, DumpRequest.class);
             DumpResponse dumpResponse = service.dump(dumpRequest);
-            mapper.writeValue(writer, dumpResponse);
+            objectMapper.writeValue(writer, dumpResponse);
         } catch (NoSuchElementException e) {
             rsp.setStatus(404);
         } catch (JsonProcessingException e) {
@@ -92,12 +91,4 @@ public class JavaFlightRecorderAction implements RootAction {
         }
     }
 
-    private ObjectMapper objectMapper() {
-        if (objectMapper == null) {
-            Injector injector = Jenkins.get().getInjector();
-            Objects.requireNonNull(injector);
-            injector.injectMembers(this);
-        }
-        return objectMapper;
-    }
 }
