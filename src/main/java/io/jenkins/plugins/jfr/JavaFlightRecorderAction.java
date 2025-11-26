@@ -100,4 +100,21 @@ public class JavaFlightRecorderAction implements RootAction {
         }
         return objectMapper;
     }
+
+    @RequirePOST
+    @WebMethod(name = "start")
+    public void doStart(StaplerRequest req, StaplerResponse rsp) throws IOException {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        rsp.setContentType("application/json");
+        rsp.setCharacterEncoding("UTF-8");
+        ObjectMapper mapper = objectMapper();
+        try (Writer writer = rsp.getWriter();
+                Reader reader = req.getReader()) {
+            StartRecordingRequest startRecordingRequest = mapper.readValue(reader, StartRecordingRequest.class);
+            JfrSession jfrSession = service.start(startRecordingRequest);
+            mapper.writeValue(writer, jfrSession);
+        } catch (JsonProcessingException e) {
+            rsp.setStatus(400);
+        }
+    }
 }

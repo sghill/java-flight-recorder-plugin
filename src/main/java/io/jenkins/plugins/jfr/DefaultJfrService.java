@@ -35,6 +35,15 @@ class DefaultJfrService implements JfrService {
         throw new NoSuchElementException("Recording not found");
     }
 
+    @Override
+    @NonNull
+    public JfrSession start(StartRecordingRequest request) throws IOException {
+        Recording recording = new Recording();
+        recording.setDuration(java.time.Duration.ofSeconds(request.durationInSeconds()));
+        recording.start();
+        return toJfrSession(recording);
+    }
+
     @NonNull
     private static JfrSession toJfrSession(@NonNull Recording recording) {
         return new JfrSession(

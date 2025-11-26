@@ -10,4 +10,7 @@ public interface JfrService {
 
     @NonNull
     DumpResponse dump(DumpRequest request) throws IOException;
+
+    @NonNull
+    JfrSession start(StartRecordingRequest request) throws IOException;
 }
