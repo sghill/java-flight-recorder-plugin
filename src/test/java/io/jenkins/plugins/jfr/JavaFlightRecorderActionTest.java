@@ -50,7 +50,7 @@ class JavaFlightRecorderActionTest {
     void setUp(JenkinsRule r) {
         javaFlightRecorderAction = new JavaFlightRecorderAction();
         javaFlightRecorderAction.setService(jfrService);
-        Injector injector = r.jenkins.getInjector().createChildInjector(new JfrGuiceModule());
+        Injector injector = r.jenkins.getInjector();
         objectMapper = injector.getInstance(Key.get(ObjectMapper.class, Names.named("java-flight-recorder")));
         javaFlightRecorderAction.setObjectMapper(objectMapper);
     }
