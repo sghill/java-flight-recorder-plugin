@@ -28,4 +28,9 @@ public class JfrGuiceModule extends AbstractModule {
         mapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         return mapper;
     }
+
+    @Provides
+    public JfrConfig jfrConfig() {
+        return JfrConfig.get();
+    }
 }
