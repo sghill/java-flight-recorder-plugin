@@ -3,6 +3,7 @@ package io.jenkins.plugins.jfr;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -39,7 +40,7 @@ class DefaultJfrService implements JfrService {
     @NonNull
     public JfrSession start(StartRecordingRequest request) throws IOException {
         Recording recording = new Recording();
-        recording.setDuration(java.time.Duration.ofSeconds(request.durationInSeconds()));
+        recording.setDuration(Duration.ofSeconds(request.durationInSeconds()));
         recording.start();
         return toJfrSession(recording);
     }
