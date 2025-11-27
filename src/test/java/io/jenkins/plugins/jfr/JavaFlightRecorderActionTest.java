@@ -2,20 +2,18 @@ package io.jenkins.plugins.jfr;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import jakarta.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.util.Modules;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
@@ -40,22 +38,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+@WithJenkins
 @ExtendWith(MockitoExtension.class)
 class JavaFlightRecorderActionTest {
 
     @Mock
     private JfrService jfrService;
-    @Mock
-    private Jenkins jenkins;
 
     private JavaFlightRecorderAction javaFlightRecorderAction;
 
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    void setUp() {
-        JfrGuiceModule.setJenkins(jenkins);
-        Injector injector = Guice.createInjector(Modules.override(new JfrGuiceModule()).with(new AbstractModule() {
+    void setUp(JenkinsRule r) {
+        Injector injector = r.jenkins.getInjector().createChildInjector(Modules.override(new JfrGuiceModule()).with(new AbstractModule() {
             @Override
             protected void configure() {
                 bind(JfrService.class).toInstance(jfrService);
@@ -66,12 +62,18 @@ class JavaFlightRecorderActionTest {
     }
 
     @Test
-    void doSessions() throws Exception {
+    void doSessions(JenkinsRule r) throws Exception {
         // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated()
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to("reader"));
         JfrSession session = new JfrSession(
                 "test", Instant.ofEpochMilli(1), "250MB", "PT1H", Collections.singletonMap("foo", "bar"));
         when(jfrService.getSessions()).thenReturn(List.of(session));
-        doNothing().when(jenkins).checkPermission(any());
 
         // when
         StaplerRequest req = mock(StaplerRequest.class);
@@ -87,11 +89,35 @@ class JavaFlightRecorderActionTest {
     }
 
     @Test
-    void doDump() throws Exception {
+    public void doSessionsIsProtectedByAdministerPermission(JenkinsRule r) throws Exception {
         // given
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        r.jenkins.setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Jenkins.READ).everywhere().to("reader"));
+
+        // when
+        try (ACLContext c = ACL.as(User.get("reader", false, null))) {
+            StaplerRequest req = mock(StaplerRequest.class);
+            StaplerResponse rsp = mock(StaplerResponse.class);
+
+            // then
+            assertThatThrownBy(() -> javaFlightRecorderAction.doSessions(req, rsp))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+    }
+
+    @Test
+    void doDump(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated()
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to("reader"));
         DumpRequest request = new DumpRequest("test");
         when(jfrService.dump(request)).thenReturn(new DumpResponse("/tmp/test"));
-        doNothing().when(jenkins).checkPermission(any());
 
         // when
         StaplerRequest req = mock(StaplerRequest.class);
@@ -108,11 +134,32 @@ class JavaFlightRecorderActionTest {
     }
 
     @Test
-    void doDumpHandlesNoSuchElementException() throws Exception {
+    public void doDumpIsProtectedByAdministerPermission(JenkinsRule r) throws Exception {
         // given
+        r.jenkins.setSecurityRealm(r.createDummySecurityRealm());
+        r.jenkins.setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Jenkins.READ).everywhere().to("reader"));
+
+        // when
+        try (ACLContext c = ACL.as(User.get("reader", false, null))) {
+            StaplerRequest req = mock(StaplerRequest.class);
+            StaplerResponse rsp = mock(StaplerResponse.class);
+
+            // then
+            assertThatThrownBy(() -> javaFlightRecorderAction.doDump(req, rsp))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+    }
+
+    @Test
+    void doDumpHandlesNoSuchElementException(JenkinsRule r) throws Exception {
+        // given
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated());
         DumpRequest request = new DumpRequest("test");
         when(jfrService.dump(request)).thenThrow(new NoSuchElementException());
-        doNothing().when(jenkins).checkPermission(any());
 
         // when
         StaplerRequest req = mock(StaplerRequest.class);
@@ -130,9 +177,12 @@ class JavaFlightRecorderActionTest {
     }
 
     @Test
-    void doDumpHandlesInvalidJson() throws Exception {
+    void doDumpHandlesInvalidJson(JenkinsRule r) throws Exception {
         // given
-        doNothing().when(jenkins).checkPermission(any());
+        r.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .toAuthenticated());
 
         // when
         StaplerRequest req = mock(StaplerRequest.class);
@@ -144,12 +194,5 @@ class JavaFlightRecorderActionTest {
 
         // then
         verify(rsp).setStatus(400);
-    }
-
-    @Test
-    void checkUIMethods() {
-        assertThat(javaFlightRecorderAction.getIconFileName()).isNotNull();
-        assertThat(javaFlightRecorderAction.getDisplayName()).isNotNull();
-        assertThat(javaFlightRecorderAction.getUrlName()).isNotNull();
     }
 }
