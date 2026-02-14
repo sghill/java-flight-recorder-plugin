@@ -1,0 +1,13 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="Java Flight Recorder">
+    <f:entry title="Output Directory" field="outputDirectory"
+             description="Absolute path for JFR dump files. Defaults to the system temporary directory if left blank.">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="Maximum Dumps to Keep" field="maxDumps"
+             description="Maximum number of JFR dump files to retain. Oldest files are removed first.">
+      <f:textbox default="3" />
+    </f:entry>
+  </f:section>
+</j:jelly>
