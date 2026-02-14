@@ -21,7 +21,7 @@ class JavaFlightRecorderConfigurationTest {
 
         // then
         assertThat(config.getOutputDirectory()).isNull();
-        assertThat(config.getMaxDumps()).isEqualTo(10);
+        assertThat(config.getMaxDumps()).isEqualTo(3);
     }
 
     @Test

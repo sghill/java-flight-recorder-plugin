@@ -13,8 +13,12 @@ import java.util.stream.Stream;
 import jdk.jfr.FlightRecorder;
 import jdk.jfr.Recording;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class DefaultJfrService implements JfrService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultJfrService.class);
 
     @Override
     @NonNull
@@ -70,12 +74,17 @@ class DefaultJfrService implements JfrService {
                         try {
                             return Files.getLastModifiedTime(p).toMillis();
                         } catch (IOException e) {
+                            LOG.warn("Failed to read last modified time for {}", p, e);
                             return 0L;
                         }
                     }))
                     .collect(Collectors.toList());
             while (jfrFiles.size() > maxDumps) {
-                Files.deleteIfExists(jfrFiles.remove(0));
+                Path toDelete = jfrFiles.remove(0);
+                long size = Files.size(toDelete);
+                if (Files.deleteIfExists(toDelete)) {
+                    LOG.info("Deleted JFR dump {} ({} bytes)", toDelete, size);
+                }
             }
         }
     }

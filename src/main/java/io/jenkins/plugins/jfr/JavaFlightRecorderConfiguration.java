@@ -2,6 +2,8 @@ package io.jenkins.plugins.jfr;
 
 import hudson.Extension;
 import hudson.util.FormValidation;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
 import org.jspecify.annotations.NonNull;
@@ -13,7 +15,7 @@ import org.kohsuke.stapler.StaplerRequest;
 @Extension
 public class JavaFlightRecorderConfiguration extends GlobalConfiguration {
 
-    private static final int DEFAULT_MAX_DUMPS = 10;
+    private static final int DEFAULT_MAX_DUMPS = 3;
 
     @Nullable
     private String outputDirectory;
@@ -54,11 +56,11 @@ public class JavaFlightRecorderConfiguration extends GlobalConfiguration {
         if (value == null || value.isBlank()) {
             return FormValidation.ok("Default: system temporary directory");
         }
-        java.nio.file.Path path = java.nio.file.Path.of(value);
+        Path path = Path.of(value);
         if (!path.isAbsolute()) {
             return FormValidation.error("Output directory must be an absolute path");
         }
-        if (java.nio.file.Files.exists(path) && !java.nio.file.Files.isDirectory(path)) {
+        if (Files.exists(path) && !Files.isDirectory(path)) {
             return FormValidation.error("Path exists but is not a directory");
         }
         return FormValidation.ok();

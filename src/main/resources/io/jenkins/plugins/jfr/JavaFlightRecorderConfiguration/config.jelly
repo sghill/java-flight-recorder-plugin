@@ -7,7 +7,7 @@
     </f:entry>
     <f:entry title="Maximum Dumps to Keep" field="maxDumps"
              description="Maximum number of JFR dump files to retain. Oldest files are removed first.">
-      <f:textbox default="10" />
+      <f:textbox default="3" />
     </f:entry>
   </f:section>
 </j:jelly>
