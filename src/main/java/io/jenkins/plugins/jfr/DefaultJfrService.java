@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 class DefaultJfrService implements JfrService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultJfrService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJfrService.class);
 
     @Override
     @NonNull
@@ -39,7 +39,11 @@ class DefaultJfrService implements JfrService {
             Files.createDirectories(outputDir);
             Path path = Files.createTempFile(outputDir, "jenkins-jvm-", ".jfr");
             recording.get().dump(path);
-            enforceMaxDumps(outputDir);
+            try {
+                enforceMaxDumps(outputDir);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to enforce max dumps in {}", outputDir, e);
+            }
             return new DumpResponse(path.toString());
         }
         throw new NoSuchElementException("Recording not found");
@@ -74,16 +78,20 @@ class DefaultJfrService implements JfrService {
                         try {
                             return Files.getLastModifiedTime(p).toMillis();
                         } catch (IOException e) {
-                            LOG.warn("Failed to read last modified time for {}", p, e);
-                            return 0L;
+                            LOGGER.warn("Failed to read last modified time for {}", p, e);
+                            return Long.MAX_VALUE;
                         }
                     }))
                     .collect(Collectors.toList());
             while (jfrFiles.size() > maxDumps) {
                 Path toDelete = jfrFiles.remove(0);
-                long size = Files.size(toDelete);
-                if (Files.deleteIfExists(toDelete)) {
-                    LOG.info("Deleted JFR dump {} ({} bytes)", toDelete, size);
+                try {
+                    long size = Files.size(toDelete);
+                    if (Files.deleteIfExists(toDelete)) {
+                        LOGGER.info("Deleted JFR dump {} ({} bytes)", toDelete, size);
+                    }
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to delete old JFR dump {}", toDelete, e);
                 }
             }
         }

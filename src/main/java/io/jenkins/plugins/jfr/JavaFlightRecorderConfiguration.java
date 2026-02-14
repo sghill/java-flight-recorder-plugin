@@ -10,7 +10,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 @Extension
 public class JavaFlightRecorderConfiguration extends GlobalConfiguration {
@@ -38,7 +38,7 @@ public class JavaFlightRecorderConfiguration extends GlobalConfiguration {
 
     @DataBoundSetter
     public void setOutputDirectory(@Nullable String outputDirectory) {
-        this.outputDirectory = outputDirectory;
+        this.outputDirectory = (outputDirectory == null || outputDirectory.isBlank()) ? null : outputDirectory;
         save();
     }
 
@@ -48,6 +48,9 @@ public class JavaFlightRecorderConfiguration extends GlobalConfiguration {
 
     @DataBoundSetter
     public void setMaxDumps(int maxDumps) {
+        if (maxDumps < 1) {
+            throw new IllegalArgumentException("maxDumps must be at least 1");
+        }
         this.maxDumps = maxDumps;
         save();
     }
@@ -79,7 +82,7 @@ public class JavaFlightRecorderConfiguration extends GlobalConfiguration {
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+    public boolean configure(StaplerRequest2 req, JSONObject json) throws FormException {
         req.bindJSON(this, json);
         return true;
     }

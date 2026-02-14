@@ -1,6 +1,7 @@
 package io.jenkins.plugins.jfr;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import hudson.util.FormValidation;
 import java.io.IOException;
@@ -46,6 +47,36 @@ class JavaFlightRecorderConfigurationTest {
 
         // then
         assertThat(config.getMaxDumps()).isEqualTo(5);
+    }
+
+    @Test
+    void setMaxDumpsRejectsZero(JenkinsRule r) {
+        // given
+        JavaFlightRecorderConfiguration config = JavaFlightRecorderConfiguration.get();
+
+        // then
+        assertThatThrownBy(() -> config.setMaxDumps(0)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void setMaxDumpsRejectsNegative(JenkinsRule r) {
+        // given
+        JavaFlightRecorderConfiguration config = JavaFlightRecorderConfiguration.get();
+
+        // then
+        assertThatThrownBy(() -> config.setMaxDumps(-1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void setOutputDirectoryNormalizesBlankToNull(JenkinsRule r) {
+        // given
+        JavaFlightRecorderConfiguration config = JavaFlightRecorderConfiguration.get();
+
+        // when
+        config.setOutputDirectory("  ");
+
+        // then
+        assertThat(config.getOutputDirectory()).isNull();
     }
 
     @Test
@@ -150,7 +181,7 @@ class JavaFlightRecorderConfigurationTest {
         // given
         JavaFlightRecorderConfiguration config = JavaFlightRecorderConfiguration.get();
         config.setOutputDirectory("/tmp/jfr-test");
-        config.setMaxDumps(3);
+        config.setMaxDumps(7);
 
         // when
         r.configRoundtrip();
@@ -158,6 +189,6 @@ class JavaFlightRecorderConfigurationTest {
         // then
         JavaFlightRecorderConfiguration reloaded = JavaFlightRecorderConfiguration.get();
         assertThat(reloaded.getOutputDirectory()).isEqualTo("/tmp/jfr-test");
-        assertThat(reloaded.getMaxDumps()).isEqualTo(3);
+        assertThat(reloaded.getMaxDumps()).isEqualTo(7);
     }
 }
